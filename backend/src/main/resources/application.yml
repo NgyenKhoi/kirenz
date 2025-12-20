@@ -1,0 +1,103 @@
+server:
+  port: ${SERVER_PORT}
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: false
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+
+  mongodb:
+    host: ${MONGODB_HOST}
+    port: ${MONGODB_PORT}
+    database: ${MONGODB_DATABASE}
+    username: ${MONGODB_USERNAME}
+    password: ${MONGODB_PASSWORD}
+    authentication-database: ${MONGODB_AUTH_DATABASE}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 5
+          multiplier: 2
+          max-interval: 16000
+        default-requeue-rejected: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: chat-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.demo.*
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  websocket:
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
+
+# Chat-specific configuration
+chat:
+  message:
+    max-size: 10000 # characters
+    page-size: 50
+  media:
+    max-image-size: 10485760 # 10MB
+    max-video-size: 1073741824 # 1GB
+    chunk-size: 52428800 # 50MB
+    streaming-threshold: 10485760 # 10MB
+  rabbitmq:
+    retry:
+      max-attempts: 5
+      initial-interval: 1000
+      multiplier: 2
+      max-interval: 16000
+  kafka:
+    retry:
+      max-attempts: 5
+      initial-interval: 1000
+      multiplier: 2
+      max-interval: 16000
+  presence:
+    heartbeat-interval: 30000 # 30 seconds
+    timeout: 60000 # 60 seconds
+
+# Mongock configuration for MongoDB migrations
+mongock:
+  migration-scan-package:
+    - com.example.demo.config.migration
+  throw-exception-if-cannot-obtain-lock: true
+  track-ignored: false
+  enabled: true
+  transaction-enabled: false
+

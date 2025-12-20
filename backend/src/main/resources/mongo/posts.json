@@ -1,0 +1,50 @@
+[
+  {
+    "_id": { "$oid": "674000000000000000000001" },
+    "slug": "just-finished-working-on-a-new-design-project-r-6zzzzz",
+    "userId": 1,
+    "content": "Just finished working on a new design project! Really excited about how the color palette turned out. The combination of warm and cool tones creates such a welcoming vibe. 🎨✨",
+    "media": [],
+    "createdAt": { "$date": { "$numberLong": "1732515600000" } },
+    "updatedAt": { "$date": { "$numberLong": "1732515600000" } },
+    "likes": 24,
+    "commentsCount": 2,
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "674000000000000000000002" },
+    "slug": "learning-react-hooks-has-been-a-game-changer-fo-6zzzzz",
+    "userId": 2,
+    "content": "Learning React hooks has been a game changer for my development workflow. The way useState and useEffect work together is just beautiful. Anyone else feel the same way?",
+    "media": [],
+    "createdAt": { "$date": { "$numberLong": "1732501200000" } },
+    "updatedAt": { "$date": { "$numberLong": "1732501200000" } },
+    "likes": 18,
+    "commentsCount": 3,
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "674000000000000000000003" },
+    "slug": "caught-the-most-amazing-sunset-yesterday-at-the-6zzzzz",
+    "userId": 3,
+    "content": "Caught the most amazing sunset yesterday at the beach. Sometimes you just need to stop and appreciate the beauty around you. 🌅",
+    "media": [],
+    "createdAt": { "$date": { "$numberLong": "1732438800000" } },
+    "updatedAt": { "$date": { "$numberLong": "1732438800000" } },
+    "likes": 42,
+    "commentsCount": 0,
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "674000000000000000000004" },
+    "slug": "tips-for-aspiring-designers-1-master-the-fundam-6zzzzz",
+    "userId": 1,
+    "content": "Tips for aspiring designers: 1) Master the fundamentals 2) Study great design 3) Practice daily 4) Accept feedback gracefully 5) Never stop learning!",
+    "media": [],
+    "createdAt": { "$date": { "$numberLong": "1732405200000" } },
+    "updatedAt": { "$date": { "$numberLong": "1732405200000" } },
+    "likes": 31,
+    "commentsCount": 0,
+    "status": "ACTIVE"
+  }
+]

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - include:
+      file: init-data-changelog.sql
+      relativeToChangelogFile: true
+  - include:
+      file: add-user-id-to-profile.sql
+      relativeToChangelogFile: true
+  - include:
+      file: add-soft-delete-fields.sql
+      relativeToChangelogFile: true
+  - include:
+      file: add-premium-field.sql
+      relativeToChangelogFile: true
+  - include:
+      file: add-last-seen-to-users.sql
+      relativeToChangelogFile: true
+  - include:
+      file: seed-data-changelog.sql
+      relativeToChangelogFile: true
+  - include:
+      file: update-password-changelog.sql
+      relativeToChangelogFile: true

@@ -1,0 +1,34 @@
+[
+  {
+    "_id": { "$oid": "675000000000000000000001" },
+    "postId": "674000000000000000000001",
+    "userId": 2,
+    "content": "This looks amazing! Would love to see the final result.",
+    "createdAt": { "$date": { "$numberLong": "1732519200000" } },
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "675000000000000000000002" },
+    "postId": "674000000000000000000001",
+    "userId": 3,
+    "content": "The color theory behind this must be fascinating!",
+    "createdAt": { "$date": { "$numberLong": "1732522800000" } },
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "675000000000000000000003" },
+    "postId": "674000000000000000000002",
+    "userId": 1,
+    "content": "Totally agree! Hooks made functional components so much more powerful.",
+    "createdAt": { "$date": { "$numberLong": "1732494000000" } },
+    "status": "ACTIVE"
+  },
+  {
+    "_id": { "$oid": "675000000000000000000004" },
+    "postId": "674000000000000000000002",
+    "userId": 3,
+    "content": "Have you tried useReducer yet? It's great for complex state management.",
+    "createdAt": { "$date": { "$numberLong": "1732497600000" } },
+    "status": "ACTIVE"
+  }
+]
