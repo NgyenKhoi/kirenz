@@ -152,7 +152,7 @@ $env:CLOUDINARY_API_SECRET="demo_secret"
 ./mvnw spring-boot:run
 ```
 
-#### macOS/Linux (Bash):
+#### Command prompt CMD:
 ```bash
 cd backend
 
