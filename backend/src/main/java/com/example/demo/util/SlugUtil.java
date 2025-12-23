@@ -13,11 +13,6 @@ public class SlugUtil {
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
     private static final Pattern EDGES_DASHES = Pattern.compile("(^-|-$)");
     
-    /**
-     * Generate a URL-friendly slug from text
-     * @param input The text to slugify
-     * @return URL-friendly slug
-     */
     public static String slugify(String input) {
         if (input == null || input.isEmpty()) {
             return "";
@@ -30,11 +25,6 @@ public class SlugUtil {
         return slug.toLowerCase(Locale.ENGLISH);
     }
     
-    /**
-     * Generate a short hash from ID for URL obfuscation
-     * @param id The ID to hash
-     * @return Short hash string (6 characters)
-     */
     public static String generateShortHash(String id) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -54,13 +44,6 @@ public class SlugUtil {
         }
     }
     
-    /**
-     * Generate a hybrid slug combining title and ID hash
-     * Format: "my-post-title-abc123"
-     * @param title The title to slugify
-     * @param id The ID to hash
-     * @return Hybrid slug
-     */
     public static String generateHybridSlug(String title, String id) {
         String titleSlug = slugify(title);
         String hash = generateShortHash(id);
@@ -73,11 +56,6 @@ public class SlugUtil {
         return titleSlug + "-" + hash;
     }
     
-    /**
-     * Extract ID hash from hybrid slug
-     * @param slug The hybrid slug
-     * @return The hash portion (last 6 characters after last dash)
-     */
     public static String extractHashFromSlug(String slug) {
         if (slug == null || slug.isEmpty()) {
             return null;

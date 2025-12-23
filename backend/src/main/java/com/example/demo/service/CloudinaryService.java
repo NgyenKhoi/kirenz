@@ -23,14 +23,6 @@ public class CloudinaryService {
     private static final long VIDEO_CHUNK_THRESHOLD = 100 * 1024 * 1024; // 100MB
     private static final long STREAMING_THRESHOLD = 10 * 1024 * 1024; // 10MB
     
-    /**
-     * Uploads an image to Cloudinary.
-     * Handles binary data directly without intermediate file storage.
-     * 
-     * @param data Binary image data
-     * @param fileName Original file name
-     * @return MediaUploadResponse containing URL and metadata
-     */
     public MediaUploadResponse uploadImage(byte[] data, String fileName) {
         try {
             Map<String, Object> uploadParams = ObjectUtils.asMap(
@@ -50,20 +42,10 @@ public class CloudinaryService {
         }
     }
     
-    /**
-     * Uploads a video to Cloudinary with intelligent chunking.
-     * Videos smaller than 100MB are uploaded as a single file.
-     * Videos larger than 100MB are split into 50MB chunks and uploaded sequentially.
-     * 
-     * @param data Binary video data
-     * @param fileName Original file name
-     * @return MediaUploadResponse containing URL and metadata
-     */
     public MediaUploadResponse uploadVideo(byte[] data, String fileName) {
         try {
             long fileSize = data.length;
             
-            // Determine upload strategy based on file size
             if (fileSize < VIDEO_CHUNK_THRESHOLD) {
                 return uploadVideoSingle(data, fileName);
             } else {
@@ -75,9 +57,6 @@ public class CloudinaryService {
         }
     }
     
-    /**
-     * Uploads a video as a single file (for videos < 100MB).
-     */
     private MediaUploadResponse uploadVideoSingle(byte[] data, String fileName) throws IOException {
         Map<String, Object> uploadParams = ObjectUtils.asMap(
             "resource_type", "video",
@@ -86,7 +65,6 @@ public class CloudinaryService {
             "unique_filename", true
         );
         
-        // Use streaming upload for files larger than 10MB
         if (data.length >= STREAMING_THRESHOLD) {
             uploadParams.put("chunk_size", 6000000); // 6MB chunks for streaming
         }
@@ -97,10 +75,6 @@ public class CloudinaryService {
         return buildMediaUploadResponse(uploadResult, "VIDEO", data.length);
     }
     
-    /**
-     * Uploads a large video in chunks (for videos >= 100MB).
-     * Splits the video into 50MB chunks and uploads them sequentially.
-     */
     private MediaUploadResponse uploadVideoChunked(byte[] data, String fileName) throws IOException {
         String uploadId = UUID.randomUUID().toString();
         List<Map<String, Object>> chunkMetadata = new ArrayList<>();
@@ -121,7 +95,6 @@ public class CloudinaryService {
             chunkMetadata.add(chunkInfo);
         }
         
-        // Create response with chunk information
         MediaUploadResponse response = new MediaUploadResponse();
         response.setType("VIDEO");
         response.setCloudinaryPublicId(uploadId);
@@ -137,14 +110,6 @@ public class CloudinaryService {
         return response;
     }
     
-    /**
-     * Uploads a single video chunk to Cloudinary.
-     * 
-     * @param chunk Binary chunk data
-     * @param chunkIndex Index of the chunk (0-based)
-     * @param uploadId Unique identifier for the chunked upload
-     * @return Public ID of the uploaded chunk
-     */
     private String uploadChunk(byte[] chunk, int chunkIndex, String uploadId) throws IOException {
         Map<String, Object> uploadParams = ObjectUtils.asMap(
             "resource_type", "video",
@@ -159,21 +124,12 @@ public class CloudinaryService {
         return uploadResult.get("public_id").toString();
     }
     
-    /**
-     * Retrieves the URL for a media item from Cloudinary.
-     * 
-     * @param publicId Cloudinary public ID
-     * @return Secure URL for the media
-     */
     public String getMediaUrl(String publicId) {
         return cloudinary.url()
             .secure(true)
             .generate(publicId);
     }
     
-    /**
-     * Retrieves the URL for a specific chunk.
-     */
     private String getChunkUrl(String publicId) {
         return cloudinary.url()
             .resourceType("video")
@@ -181,11 +137,6 @@ public class CloudinaryService {
             .generate(publicId);
     }
     
-    /**
-     * Deletes a media item from Cloudinary.
-     * 
-     * @param publicId Cloudinary public ID
-     */
     public void deleteMedia(String publicId) {
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
@@ -195,17 +146,9 @@ public class CloudinaryService {
         }
     }
     
-    /**
-     * Downloads media from Cloudinary with streaming support for large files.
-     * 
-     * @param publicId Cloudinary public ID
-     * @return Binary media data
-     */
     public byte[] downloadMedia(String publicId) {
         try {
             String url = getMediaUrl(publicId);
-            // In a real implementation, this would stream from Cloudinary
-            // For now, we return the URL as a placeholder
             return url.getBytes();
         } catch (Exception e) {
             log.error("Failed to download media: {}", e.getMessage());
@@ -213,9 +156,6 @@ public class CloudinaryService {
         }
     }
     
-    /**
-     * Builds a MediaUploadResponse from Cloudinary upload result.
-     */
     private MediaUploadResponse buildMediaUploadResponse(Map<String, Object> uploadResult, String type, long fileSize) {
         MediaUploadResponse response = new MediaUploadResponse();
         response.setType(type);

@@ -21,6 +21,7 @@ import com.example.demo.repository.mongo.MessageRepository;
 import com.example.demo.service.ChatService;
 import com.example.demo.service.RateLimiterService;
 import com.example.demo.service.UserPresenceService;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,18 +46,34 @@ import static org.awaitility.Awaitility.await;
 class ChatIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17")
+    @SuppressWarnings("resource")
+    static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
 
     @Container
-    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:7.0")
+    @SuppressWarnings("resource")
+    static final MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:7.0")
             .withExposedPorts(27017);
 
     @Container
-    static RabbitMQContainer rabbitMQContainer = new RabbitMQContainer("rabbitmq:4-management")
+    @SuppressWarnings("resource")
+    static final RabbitMQContainer rabbitMQContainer = new RabbitMQContainer("rabbitmq:4-management")
             .withExposedPorts(5672);
+
+    @AfterAll
+    static void tearDown() {
+        if (postgresContainer != null && postgresContainer.isRunning()) {
+            postgresContainer.stop();
+        }
+        if (mongoDBContainer != null && mongoDBContainer.isRunning()) {
+            mongoDBContainer.stop();
+        }
+        if (rabbitMQContainer != null && rabbitMQContainer.isRunning()) {
+            rabbitMQContainer.stop();
+        }
+    }
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {

@@ -24,11 +24,6 @@ public class JwtService {
     @Value("${jwt.refresh-token-expiration}")
     private Long refreshTokenExpiration;
 
-    /**
-     * Generate access token for authenticated user
-     * @param user The authenticated user
-     * @return JWT access token string
-     */
     public String generateAccessToken(User user) {
         try {
             Date now = new Date();
@@ -56,11 +51,6 @@ public class JwtService {
         }
     }
 
-    /**
-     * Generate refresh token for authenticated user
-     * @param user The authenticated user
-     * @return JWT refresh token string
-     */
     public String generateRefreshToken(User user) {
         try {
             Date now = new Date();
@@ -89,12 +79,6 @@ public class JwtService {
         }
     }
 
-    /**
-     * Validate JWT token signature and expiration
-     * @param token JWT token string
-     * @return JWTClaimsSet if token is valid
-     * @throws RuntimeException if token is invalid or expired
-     */
     public JWTClaimsSet validateToken(String token) {
         try {
             SignedJWT signedJWT = SignedJWT.parse(token);
@@ -119,21 +103,11 @@ public class JwtService {
         }
     }
 
-    /**
-     * Check if token is expired
-     * @param claimsSet JWT claims set
-     * @return true if token is expired, false otherwise
-     */
     private boolean isTokenExpired(JWTClaimsSet claimsSet) {
         Date expirationTime = claimsSet.getExpirationTime();
         return expirationTime != null && expirationTime.before(new Date());
     }
 
-    /**
-     * Extract user ID from JWT token
-     * @param token JWT token string
-     * @return User ID
-     */
     public Long extractUserId(String token) {
         try {
             JWTClaimsSet claimsSet = validateToken(token);
@@ -144,11 +118,6 @@ public class JwtService {
         }
     }
 
-    /**
-     * Extract premium status from JWT token
-     * @param token JWT token string
-     * @return Premium status
-     */
     public Boolean extractPremiumStatus(String token) {
         try {
             JWTClaimsSet claimsSet = validateToken(token);
@@ -159,11 +128,6 @@ public class JwtService {
         }
     }
 
-    /**
-     * Extract email from JWT token
-     * @param token JWT token string
-     * @return User email
-     */
     public String extractEmail(String token) {
         try {
             JWTClaimsSet claimsSet = validateToken(token);
@@ -171,5 +135,34 @@ public class JwtService {
         } catch (Exception e) {
             throw new RuntimeException("Error extracting email from token", e);
         }
+    }
+
+    public boolean validateRefreshToken(String token) {
+        try {
+            JWTClaimsSet claimsSet = validateToken(token);
+            String tokenType = (String) claimsSet.getClaim("type");
+            return "refresh".equals(tokenType);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public Long extractUserIdFromRefreshToken(String token) {
+        try {
+            JWTClaimsSet claimsSet = validateToken(token);
+            String tokenType = (String) claimsSet.getClaim("type");
+            if (!"refresh".equals(tokenType)) {
+                throw new RuntimeException("Not a refresh token");
+            }
+            String subject = claimsSet.getSubject();
+            return Long.parseLong(subject);
+        } catch (Exception e) {
+            throw new RuntimeException("Error extracting user ID from refresh token", e);
+        }
+    }
+
+    public void invalidateRefreshToken(String token) {
+        // In a real implementation, you would store invalidated tokens in a blacklist
+        // For now, this is a placeholder
     }
 }

@@ -31,14 +31,6 @@ public class MessageSanitizer {
         Pattern.CASE_INSENSITIVE
     );
     
-    /**
-     * Sanitizes message content to prevent XSS attacks.
-     * Removes script tags, HTML tags, javascript: protocols, and event handlers.
-     * 
-     * @param content The message content to sanitize
-     * @return Sanitized message content
-     * @throws AppException if content contains dangerous patterns that cannot be safely sanitized
-     */
     public String sanitize(String content) {
         if (content == null || content.isEmpty()) {
             return content;
@@ -74,12 +66,6 @@ public class MessageSanitizer {
         return sanitized;
     }
     
-    /**
-     * Escapes special HTML characters to prevent XSS.
-     * 
-     * @param text The text to escape
-     * @return Escaped text
-     */
     private String escapeHtml(String text) {
         if (text == null) {
             return null;
@@ -94,13 +80,6 @@ public class MessageSanitizer {
             .replace("/", "&#x2F;");
     }
     
-    /**
-     * Validates that the content length is within acceptable limits.
-     * 
-     * @param content The content to validate
-     * @param maxLength Maximum allowed length
-     * @throws AppException if content exceeds maximum length
-     */
     public void validateLength(String content, int maxLength) {
         if (content != null && content.length() > maxLength) {
             log.warn("Message content exceeds maximum length: {} > {}", content.length(), maxLength);

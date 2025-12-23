@@ -35,13 +35,6 @@ public class MediaValidator {
         ".mp4", ".mpeg", ".mov", ".avi", ".webm"
     );
     
-    /**
-     * Validates image file size and type.
-     * 
-     * @param fileName The file name
-     * @param fileSize The file size in bytes
-     * @throws AppException if validation fails
-     */
     public void validateImage(String fileName, long fileSize) {
         log.debug("Validating image: {} (size: {} bytes)", fileName, fileSize);
         
@@ -64,13 +57,6 @@ public class MediaValidator {
         log.debug("Image validation passed");
     }
     
-    /**
-     * Validates video file size and type.
-     * 
-     * @param fileName The file name
-     * @param fileSize The file size in bytes
-     * @throws AppException if validation fails
-     */
     public void validateVideo(String fileName, long fileSize) {
         log.debug("Validating video: {} (size: {} bytes)", fileName, fileSize);
         
@@ -93,12 +79,6 @@ public class MediaValidator {
         log.debug("Video validation passed");
     }
     
-    /**
-     * Validates media type string.
-     * 
-     * @param mediaType The media type (IMAGE or VIDEO)
-     * @throws AppException if media type is invalid
-     */
     public void validateMediaType(String mediaType) {
         if (mediaType == null || 
             (!mediaType.equalsIgnoreCase("IMAGE") && !mediaType.equalsIgnoreCase("VIDEO"))) {
@@ -107,12 +87,6 @@ public class MediaValidator {
         }
     }
     
-    /**
-     * Validates that file data is not null or empty.
-     * 
-     * @param data The file data
-     * @throws AppException if data is null or empty
-     */
     public void validateFileData(byte[] data) {
         if (data == null || data.length == 0) {
             log.warn("File data is null or empty");

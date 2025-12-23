@@ -6,7 +6,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,11 +88,10 @@ public class RabbitMQConfig {
     }
     
     @Bean
-    public org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory, 
             JacksonJsonMessageConverter messageConverter) {
-        org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory factory = 
-            new org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory();
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(messageConverter);
         return factory;

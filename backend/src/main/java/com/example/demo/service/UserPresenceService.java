@@ -32,10 +32,6 @@ public class UserPresenceService {
     
     private static final long HEARTBEAT_TIMEOUT_MS = 60000; // 60 seconds
     
-    /**
-     * Marks a user as online and stores their session information.
-     * Broadcasts presence update to all users who have conversations with this user.
-     */
     public void userConnected(Long userId, String sessionId) {
         log.info("User {} connected with session {}", userId, sessionId);
         
@@ -50,10 +46,6 @@ public class UserPresenceService {
         broadcastPresenceUpdate(userId, PresenceStatus.ONLINE);
     }
     
-    /**
-     * Marks a user as offline and removes their session information.
-     * Broadcasts presence update to all users who have conversations with this user.
-     */
     public void userDisconnected(Long userId, String sessionId) {
         log.info("User {} disconnected with session {}", userId, sessionId);
         
@@ -61,7 +53,6 @@ public class UserPresenceService {
         if (sessionInfo != null && sessionInfo.getSessionId().equals(sessionId)) {
             activeSessions.remove(userId);
             
-            // Update lastSeen in database
             userRepository.findById(userId).ifPresent(user -> {
                 user.setLastSeen(Instant.now());
                 userRepository.save(user);
@@ -71,9 +62,6 @@ public class UserPresenceService {
         }
     }
     
-    /**
-     * Retrieves the list of online users who are participants in the specified conversation.
-     */
     public List<UserPresenceResponse> getOnlineUsers(String conversationId) {
         log.debug("Getting online users for conversation {}", conversationId);
         
@@ -110,10 +98,6 @@ public class UserPresenceService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Broadcasts presence status update to all users who have conversations with the specified user.
-     * Sends the update to user-specific queue destinations.
-     */
     private void broadcastPresenceUpdate(Long userId, PresenceStatus status) {
         
         List<Conversation> conversations = conversationRepository
@@ -150,10 +134,6 @@ public class UserPresenceService {
             });
     }
     
-    /**
-     * Scheduled task that runs every 30 seconds to check for stale sessions.
-     * Disconnects users whose last heartbeat was more than 60 seconds ago.
-     */
     @Scheduled(fixedRate = 30000)
     public void checkHeartbeats() {
         
@@ -171,7 +151,6 @@ public class UserPresenceService {
         staleUsers.forEach(userId -> {
             SessionInfo sessionInfo = activeSessions.remove(userId);
             if (sessionInfo != null) {
-                // Update lastSeen in database
                 userRepository.findById(userId).ifPresent(user -> {
                     user.setLastSeen(Instant.now());
                     userRepository.save(user);
@@ -182,10 +161,6 @@ public class UserPresenceService {
         });
     }
     
-    /**
-     * Updates the last heartbeat timestamp for a user's session.
-     * This should be called periodically to keep the session alive.
-     */
     public void updateHeartbeat(Long userId) {
         SessionInfo sessionInfo = activeSessions.get(userId);
         if (sessionInfo != null) {
@@ -193,9 +168,6 @@ public class UserPresenceService {
         }
     }
     
-    /**
-     * Retrieves presence information for all users in the system.
-     */
     public List<UserPresenceResponse> getAllUserPresence() {
         log.debug("Getting presence for all users");
         

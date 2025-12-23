@@ -32,8 +32,18 @@ public class Profile {
     @Column(name = "bio", length = Integer.MAX_VALUE)
     private String bio;
 
-    @Column(name = "birthday")
-    private LocalDate birthday;
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "website")
+    private String website;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @ColumnDefault("now()")
+    @Column(name = "created_at")
+    private Instant createdAt;
 
     @ColumnDefault("now()")
     @Column(name = "updated_at")

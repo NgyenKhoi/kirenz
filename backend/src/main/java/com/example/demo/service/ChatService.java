@@ -23,7 +23,6 @@ import com.example.demo.repository.jpa.ProfileRepository;
 import com.example.demo.repository.jpa.UserRepository;
 import com.example.demo.repository.mongo.ConversationRepository;
 import com.example.demo.repository.mongo.MessageRepository;
-import com.example.demo.util.MediaValidator;
 import com.example.demo.util.MessageSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,50 +49,37 @@ public class ChatService {
     private final ProfileRepository profileRepository;
     private final ChatMapper chatMapper;
     private final RabbitTemplate rabbitTemplate;
-    private final CloudinaryService cloudinaryService;
     private final RateLimiterService rateLimiterService;
     private final MessageSanitizer messageSanitizer;
-    private final MediaValidator mediaValidator;
     private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
     
     private static final int DEFAULT_PAGE_SIZE = 50;
     private static final int MAX_MESSAGE_LENGTH = 10000;
     
-    /**
-     * Creates a new conversation with the specified participants.
-     * Validates that all participants exist and are active users.
-     * For direct conversations, ensures exactly 2 participants.
-     * For group conversations, ensures at least 2 participants.
-     */
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long createdBy) {
         log.info("Creating conversation of type {} with {} participants", 
             request.getType(), request.getParticipantIds().size());
         
-        // Validate participant list
         if (request.getParticipantIds() == null || request.getParticipantIds().size() < 2) {
             throw new AppException(ErrorCode.INVALID_PARTICIPANT_LIST);
         }
         
-        // Validate conversation type
         if (request.getType() == ConversationType.DIRECT && request.getParticipantIds().size() != 2) {
             throw new AppException(ErrorCode.INVALID_CONVERSATION_TYPE);
         }
         
-        // Validate all participants exist and are active
         List<User> participants = userRepository.findAllById(request.getParticipantIds());
         if (participants.size() != request.getParticipantIds().size()) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
         
-        // Check all participants are active
         boolean allActive = participants.stream()
             .allMatch(user -> user.getStatus() == EntityStatus.ACTIVE);
         if (!allActive) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
         
-        // Create conversation
         Conversation conversation = chatMapper.toConversation(request);
         conversation.setCreatedBy(createdBy);
         conversation.setCreatedAt(Instant.now());
@@ -125,10 +111,6 @@ public class ChatService {
         return response;
     }
     
-    /**
-     * Retrieves a conversation by ID with access control.
-     * Ensures the requesting user is a participant in the conversation.
-     */
     public ConversationResponse getConversation(String conversationId, Long userId) {
         log.info("Fetching conversation {} for user {}", conversationId, userId);
         
@@ -144,10 +126,6 @@ public class ChatService {
         return enrichConversationResponse(conversation, userId);
     }
     
-    /**
-     * Retrieves all conversations for a specific user.
-     * Returns conversations ordered by most recently updated.
-     */
     public List<ConversationResponse> getUserConversations(Long userId) {
         log.info("Fetching conversations for user {}", userId);
         
@@ -159,11 +137,6 @@ public class ChatService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Gets or creates a direct conversation between two users.
-     * If a direct conversation already exists between the users, returns it.
-     * Otherwise, creates a new direct conversation.
-     */
     @Transactional
     public ConversationResponse getOrCreateDirectConversation(Long user1Id, Long user2Id) {
         log.info("Getting or creating direct conversation between users {} and {}", user1Id, user2Id);
@@ -199,11 +172,6 @@ public class ChatService {
         return createConversation(request, user1Id);
     }
     
-    /**
-     * Retrieves messages for a conversation with pagination.
-     * Returns messages in descending chronological order (newest first).
-     * Default page size is 50 messages.
-     */
     public List<MessageResponse> getMessages(String conversationId, Long userId, int page, int size) {
         log.info("Fetching messages for conversation {} (page: {}, size: {})", conversationId, page, size);
         
@@ -232,10 +200,6 @@ public class ChatService {
         return messages;
     }
     
-    /**
-     * Marks all messages in a conversation as read for a specific user.
-     * Updates the delivery status to READ for all unread messages.
-     */
     @Transactional
     public void markAsRead(String conversationId, Long userId) {
         log.info("Marking messages as read for conversation {} and user {}", conversationId, userId);
@@ -271,13 +235,6 @@ public class ChatService {
         log.info("Marked {} messages as read", unreadMessages.size());
     }
     
-    /**
-     * Sends a message by publishing it to RabbitMQ chat.exchange with chat.input routing key.
-     * Validates that the content is not empty and the user is a participant in the conversation.
-     * Handles media attachments by uploading them to Cloudinary.
-     * If media upload fails, saves the message without media attachment.
-     * Applies rate limiting and message sanitization for security.
-     */
     public MessageResponse sendMessage(SendMessageRequest request, Long senderId) {
         log.info("Sending message from user {} to conversation {}", senderId, request.getConversationId());
         
@@ -365,12 +322,6 @@ public class ChatService {
         return response;
     }
     
-    /**
-     * Processes a message from RabbitMQ chat.input.queue.
-     * Persists the message to MongoDB and updates the conversation's last message.
-     * After persisting, publishes the message to chat.exchange with chat.output routing key.
-     * This method is called by the RabbitMQ consumer.
-     */
     @Transactional
     public void processMessage(ChatMessage chatMessage) {
         log.info("Processing message for conversation {} with {} attachments", 
@@ -468,10 +419,7 @@ public class ChatService {
             throw new AppException(ErrorCode.RABBITMQ_CONSUME_FAILED);
         }
     }
-    
-    /**
-     * Enriches a conversation response with participant details and unread count.
-     */
+
     private ConversationResponse enrichConversationResponse(Conversation conversation, Long userId) {
         ConversationResponse response = chatMapper.toConversationResponse(conversation);
         
@@ -527,10 +475,6 @@ public class ChatService {
         return response;
     }
     
-    /**
-     * Converts ChatMessage to MessageResponse for WebSocket broadcasting.
-     * This method is public so it can be called by the RabbitMQ consumer.
-     */
     public MessageResponse convertToMessageResponse(ChatMessage chatMessage) {
         MessageResponse response = new MessageResponse();
         response.setId(chatMessage.getMessageId());
