@@ -88,6 +88,13 @@ class ChatIntegrationTest {
         registry.add("spring.rabbitmq.port", rabbitMQContainer::getAmqpPort);
         registry.add("spring.rabbitmq.username", () -> "guest");
         registry.add("spring.rabbitmq.password", () -> "guest");
+        registry.add("spring.rabbitmq.stomp.port", () -> "61613");
+        // Add missing environment variables for test
+        registry.add("server.port", () -> "0");
+        registry.add("spring.websocket.allowed-origins", () -> "*");
+        registry.add("jwt.secret", () -> "test-secret-key-for-testing-purposes-only");
+        registry.add("jwt.access-token-expiration", () -> "3600000");
+        registry.add("jwt.refresh-token-expiration", () -> "86400000");
         // Disable rate limiting for tests
         registry.add("chat.rate-limit.enabled", () -> "false");
     }

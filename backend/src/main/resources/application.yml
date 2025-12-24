@@ -30,6 +30,11 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
+    stomp:
+      port: ${RABBITMQ_STOMP_PORT}
+      heartbeat:
+        send: 10000
+        receive: 10000
     listener:
       simple:
         retry:
@@ -55,6 +60,12 @@ spring:
 
   websocket:
     allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS}
+    broker:
+      type: rabbitmq # rabbitmq or simple
+      reconnect:
+        max-attempts: 5
+        initial-delay: 1000
+        multiplier: 2
 
 jwt:
   secret: ${JWT_SECRET}
@@ -91,6 +102,11 @@ chat:
   presence:
     heartbeat-interval: 30000 # 30 seconds
     timeout: 60000 # 60 seconds
+  broadcasting:
+    retry:
+      max-attempts: 3
+      delay: 500
+    timeout: 5000
 
 # Mongock configuration for MongoDB migrations
 mongock:

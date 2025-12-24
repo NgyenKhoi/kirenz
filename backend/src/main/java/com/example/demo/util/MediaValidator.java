@@ -19,14 +19,6 @@ public class MediaValidator {
     @Value("${chat.media.max-video-size:1073741824}")
     private long maxVideoSize;
     
-    private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
-        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
-    );
-    
-    private static final List<String> ALLOWED_VIDEO_TYPES = Arrays.asList(
-        "video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"
-    );
-    
     private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList(
         ".jpg", ".jpeg", ".png", ".gif", ".webp"
     );

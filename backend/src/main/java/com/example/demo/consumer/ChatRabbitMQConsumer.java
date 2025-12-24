@@ -2,6 +2,7 @@ package com.example.demo.consumer;
 
 import com.example.demo.config.RabbitMQConfig;
 import com.example.demo.dto.internal.ChatMessage;
+import com.example.demo.dto.response.MessageResponse;
 import com.example.demo.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class ChatRabbitMQConsumer {
             log.info("Consuming message from chat.output.queue for conversation: {}", message.getConversationId());
             
             // Convert ChatMessage to MessageResponse for frontend
-            var messageResponse = chatService.convertToMessageResponse(message);
+            MessageResponse messageResponse = chatService.convertToMessageResponse(message);
             
             messagingTemplate.convertAndSend(
                 "/topic/conversation/" + message.getConversationId(),

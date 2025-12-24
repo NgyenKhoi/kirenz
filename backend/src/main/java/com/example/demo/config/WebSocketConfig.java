@@ -18,11 +18,38 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${spring.websocket.allowed-origins}")
     private String allowedOrigins;
     
+    @Value("${spring.rabbitmq.host}")
+    private String rabbitHost;
+    
+    @Value("${spring.rabbitmq.port}")
+    private int rabbitPort;
+    
+    @Value("${spring.rabbitmq.username}")
+    private String rabbitUsername;
+    
+    @Value("${spring.rabbitmq.password}")
+    private String rabbitPassword;
+    
+    @Value("${spring.rabbitmq.stomp.port}")
+    private int stompPort;
+    
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue");
+        // Disable simple broker
+        // config.enableSimpleBroker("/topic", "/queue");
+        
+        // Enable RabbitMQ STOMP broker relay
+        config.enableStompBrokerRelay("/topic", "/queue", "/user")
+                .setRelayHost(rabbitHost)
+                .setRelayPort(stompPort)
+                .setClientLogin(rabbitUsername)
+                .setClientPasscode(rabbitPassword)
+                .setSystemLogin(rabbitUsername)
+                .setSystemPasscode(rabbitPassword)
+                .setVirtualHost("/");
+        
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }
