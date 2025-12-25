@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ChatService {
     
     private final ConversationRepository conversationRepository;
@@ -58,9 +57,6 @@ public class ChatService {
     
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long createdBy) {
-        log.info("Creating conversation of type {} with {} participants", 
-            request.getType(), request.getParticipantIds().size());
-        
         if (request.getParticipantIds() == null || request.getParticipantIds().size() < 2) {
             throw new AppException(ErrorCode.INVALID_PARTICIPANT_LIST);
         }
@@ -88,11 +84,8 @@ public class ChatService {
         
         Conversation savedConversation = conversationRepository.save(conversation);
         
-        log.info("Created conversation with ID: {}", savedConversation.getId());
-        
         ConversationResponse response = enrichConversationResponse(savedConversation, createdBy);
         
-        // Broadcast to all participants via WebSocket
         for (Long participantId : savedConversation.getParticipantIds()) {
             if (!participantId.equals(createdBy)) {
                 try {
@@ -101,9 +94,7 @@ public class ChatService {
                         "/queue/conversations",
                         response
                     );
-                    log.info("Sent conversation notification to user {}", participantId);
                 } catch (Exception e) {
-                    log.error("Failed to send conversation notification to user {}: {}", participantId, e.getMessage());
                 }
             }
         }
@@ -112,13 +103,10 @@ public class ChatService {
     }
     
     public ConversationResponse getConversation(String conversationId, Long userId) {
-        log.info("Fetching conversation {} for user {}", conversationId, userId);
-        
         Conversation conversation = conversationRepository
             .findByIdAndStatus(conversationId, EntityStatus.ACTIVE)
             .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
         
-        // Verify user is a participant
         if (!conversation.getParticipantIds().contains(userId)) {
             throw new AppException(ErrorCode.USER_NOT_IN_CONVERSATION);
         }

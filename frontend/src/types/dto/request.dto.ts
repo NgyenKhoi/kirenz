@@ -1,7 +1,6 @@
 import { MediaItemDTO } from './post.dto';
 
 export interface CreatePostRequest {
-  // userId is obtained from JWT token on backend
   content: string;
   media: MediaItemDTO[];
 }
@@ -13,7 +12,6 @@ export interface UpdatePostRequest {
 
 export interface CreateCommentRequest {
   postId: string;
-  // userId is obtained from JWT token on backend
   content: string;
 }
 

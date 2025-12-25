@@ -19,6 +19,7 @@ public interface CommentMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "userId", ignore = true)
     Comment toDocument(CreateCommentRequest request);
     
     @Mapping(target = "id", ignore = true)

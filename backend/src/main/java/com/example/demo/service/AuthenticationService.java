@@ -45,7 +45,7 @@ public class AuthenticationService {
 
         user = userRepository.save(user);
 
-        // Tạo profile mặc định ngay sau khi tạo user
+        // create a default profile after create user
         profileService.createDefaultProfile(user);
 
         String accessToken = jwtService.generateAccessToken(user);

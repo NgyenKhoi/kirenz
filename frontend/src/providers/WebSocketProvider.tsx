@@ -6,6 +6,7 @@ import websocketService from '@/services/websocket.service';
 import { chatKeys } from '@/hooks/queries/useChatQueries';
 import { toast } from 'sonner';
 import type { ConversationResponse, MessageResponse, UserPresenceResponse } from '@/types/dto/chat.dto';
+import type { ConversationUpdateMessage } from '@/types/dto/message-summary.dto';
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface WebSocketProviderProps {
 export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
   const queryClient = useQueryClient();
   const { userId, accessToken, isAuthenticated } = useAuthStore();
+  const { updateConversation, addMessage, incrementUnreadCount } = useChatStore();
   const isInitialized = useRef(false);
   const subscriptionIds = useRef<string[]>([]);
   const previousToken = useRef<string | null>(null);
@@ -24,22 +26,18 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
       return;
     }
 
-    // Check if token changed (token refresh happened)
     if (previousToken.current && previousToken.current !== accessToken && isInitialized.current) {
       console.log('[WebSocketProvider] Token refreshed, reconnecting WebSocket...');
       
       const reconnectWebSocket = async () => {
         try {
-          // Unsubscribe from all current subscriptions
           subscriptionIds.current.forEach(id => {
             websocketService.unsubscribe(id);
           });
           subscriptionIds.current = [];
           
-          // Reconnect with new token
-          await websocketService.reconnect(accessToken);
+          await websocketService.reconnect(accessToken, userId);
           
-          // Re-establish subscriptions
           await setupSubscriptions();
           
           console.log('[WebSocketProvider] Successfully reconnected after token refresh');
@@ -56,7 +54,6 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
   }, [accessToken, isAuthenticated, userId, queryClient]);
 
   const setupSubscriptions = async () => {
-    // Subscribe to presence updates
     const presenceSub = websocketService.subscribe('/user/queue/presence', (presence: UserPresenceResponse) => {
       console.log('[WebSocketProvider] Presence update:', presence);
       if (presence.userId && presence.status) {
@@ -66,7 +63,6 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
     });
     subscriptionIds.current.push(presenceSub);
 
-    // Subscribe to new conversations
     const conversationSub = websocketService.subscribe('/user/queue/conversations', (conversation: ConversationResponse) => {
       console.log('[WebSocketProvider] New conversation received:', conversation);
       queryClient.invalidateQueries({ queryKey: chatKeys.conversations() });
@@ -74,30 +70,30 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
     });
     subscriptionIds.current.push(conversationSub);
 
-    // Subscribe to new messages
-    const messageSub = websocketService.subscribe('/user/queue/messages', (message: MessageResponse) => {
-      console.log('[WebSocketProvider] New message received:', message);
+    // User queue subscription is now handled automatically by WebSocketService
+    // when connecting with userId for conversation list updates
+    websocketService.subscribeToUserQueue(userId!, (update: ConversationUpdateMessage) => {
+      console.log('[WebSocketProvider] Conversation update received for conversation list:', update);
       
       const currentActiveConversation = useChatStore.getState().activeConversation;
-      useChatStore.getState().addMessage(message.conversationId, message);
       
-      if (message.conversationId !== currentActiveConversation && message.senderId !== userId) {
-        useChatStore.getState().incrementUnreadCount(message.conversationId);
+      // Update conversation in store (conversation list)
+      updateConversation(update);
+      
+      // If this is not the active conversation and not from current user, show notification
+      if (update.conversationId !== currentActiveConversation && update.lastMessage.senderId !== userId) {
+        toast.info(`New message from ${update.lastMessage.senderName}`);
       }
       
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ 
-        queryKey: chatKeys.messages(message.conversationId, 0) 
+        queryKey: chatKeys.messages(update.conversationId, 0) 
       });
       
       queryClient.invalidateQueries({ 
         queryKey: chatKeys.conversations() 
       });
-      
-      if (message.conversationId !== currentActiveConversation && message.senderId !== userId) {
-        toast.info(`New message from ${message.senderName}`);
-      }
     });
-    subscriptionIds.current.push(messageSub);
   };
 
   useEffect(() => {
@@ -124,12 +120,12 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
           useChatStore.getState().setConversations(conversationsData);
         }
         
-        // Then connect WebSocket
-        await websocketService.connect(accessToken);
+        // Connect WebSocket with userId for automatic user queue subscription
+        await websocketService.connect(accessToken, userId);
         isInitialized.current = true;
         previousToken.current = accessToken;
 
-        // Setup subscriptions
+        // Setup additional subscriptions
         await setupSubscriptions();
 
         console.log('[WebSocketProvider] WebSocket initialized successfully');
@@ -141,7 +137,6 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
 
     initializeWebSocket();
 
-    // Cleanup on unmount or when auth changes
     return () => {
       console.log('[WebSocketProvider] Cleaning up WebSocket connection...');
       subscriptionIds.current.forEach(id => {
@@ -151,7 +146,7 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
       websocketService.disconnect();
       isInitialized.current = false;
     };
-  }, [isAuthenticated, userId, accessToken, queryClient]);
+  }, [isAuthenticated, userId, accessToken, queryClient, updateConversation]);
 
   return <>{children}</>;
 };

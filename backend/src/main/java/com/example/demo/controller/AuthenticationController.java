@@ -16,11 +16,6 @@ public class AuthenticationController {
     
     private final AuthenticationService authenticationService;
     
-    /**
-     * Register a new user
-     * @param request Registration request with email and password
-     * @return ApiResponse with authentication tokens and user information
-     */
     @PostMapping("/register")
     public ApiResponse<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
         ApiResponse<AuthResponse> response = new ApiResponse<>();
@@ -29,11 +24,6 @@ public class AuthenticationController {
         return response;
     }
     
-    /**
-     * Login user with email and password
-     * @param request Login request with email and password
-     * @return ApiResponse with authentication tokens and user information
-     */
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         ApiResponse<AuthResponse> response = new ApiResponse<>();
@@ -42,11 +32,6 @@ public class AuthenticationController {
         return response;
     }
     
-    /**
-     * Refresh access token using refresh token
-     * @param request Refresh token request
-     * @return ApiResponse with new access token
-     */
     @PostMapping("/refresh")
     public ApiResponse<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         ApiResponse<AuthResponse> response = new ApiResponse<>();

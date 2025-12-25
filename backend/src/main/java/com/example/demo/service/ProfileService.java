@@ -11,7 +11,6 @@ import com.example.demo.mapper.ProfileMapper;
 import com.example.demo.repository.jpa.ProfileRepository;
 import com.example.demo.repository.jpa.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ProfileService {
     
     private final ProfileRepository profileRepository;
@@ -47,10 +45,8 @@ public class ProfileService {
         
         profileMapper.updateEntityFromRequest(request, profile);
         profile.setUpdatedAt(Instant.now());
-        
-        Profile savedProfile = profileRepository.save(profile);
-        log.info("Updated profile for user {}", userId);
-        
+    
+        Profile savedProfile = profileRepository.save(profile);        
         return profileMapper.toResponse(savedProfile);
     }
     
@@ -62,8 +58,6 @@ public class ProfileService {
         profile.setStatus(EntityStatus.DELETED);
         profile.setDeletedAt(Instant.now());
         profileRepository.save(profile);
-        
-        log.info("Deleted profile for user {}", userId);
     }
     
     @Transactional

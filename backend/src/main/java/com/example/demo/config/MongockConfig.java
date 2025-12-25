@@ -2,10 +2,6 @@ package com.example.demo.config;
 
 import io.mongock.runner.springboot.EnableMongock;
 import org.springframework.context.annotation.Configuration;
-
-/**
- * Mongock configuration to enable MongoDB migrations
- */
 @Configuration
 @EnableMongock
 public class MongockConfig {

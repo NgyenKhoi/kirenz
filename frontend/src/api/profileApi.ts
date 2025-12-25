@@ -1,16 +1,21 @@
-import { ApiResponse, ProfileResponse, UpdateProfileRequest } from '../types/dto';
-import { apiClient } from './client';
+import axiosClient from './axiosClient';
+import type { ApiResponse } from '@/types/dto/api-response.dto';
+import type { ProfileResponse } from '@/types/dto/profile.dto';
+import type { UpdateProfileRequest } from '@/types/dto/request.dto';
 
 export const profileApi = {
-  getProfile: (): Promise<ApiResponse<ProfileResponse>> => {
-    return apiClient.get('/profile');
+  getProfile: async (): Promise<ApiResponse<ProfileResponse>> => {
+    const response = await axiosClient.get<ApiResponse<ProfileResponse>>('/profile');
+    return response.data;
   },
 
-  updateProfile: (data: UpdateProfileRequest): Promise<ApiResponse<ProfileResponse>> => {
-    return apiClient.put('/profile', data);
+  updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse<ProfileResponse>> => {
+    const response = await axiosClient.put<ApiResponse<ProfileResponse>>('/profile', data);
+    return response.data;
   },
 
-  deleteProfile: (): Promise<ApiResponse<void>> => {
-    return apiClient.delete('/profile');
-  }
+  deleteProfile: async (): Promise<ApiResponse<void>> => {
+    const response = await axiosClient.delete<ApiResponse<void>>('/profile');
+    return response.data;
+  },
 };

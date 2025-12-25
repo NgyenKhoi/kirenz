@@ -45,7 +45,6 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling 401 errors and token refresh
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -55,7 +54,6 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Skip refresh for auth endpoints
       if (originalRequest.url?.includes('/auth/login') || 
           originalRequest.url?.includes('/auth/register') ||
           originalRequest.url?.includes('/auth/refresh')) {
@@ -84,7 +82,6 @@ apiClient.interceptors.response.use(
       const refreshToken = useAuthStore.getState().refreshToken;
 
       if (!refreshToken) {
-        // No refresh token available, redirect to login
         isRefreshing = false;
         processQueue(new Error('No refresh token available'), null);
         useAuthStore.getState().clearAuthData();
@@ -93,7 +90,6 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        // Attempt to refresh the token
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/auth/refresh`,
           { refreshToken },
@@ -106,21 +102,16 @@ apiClient.interceptors.response.use(
 
         const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-        // Store new tokens in Zustand store
         useAuthStore.getState().updateTokens(accessToken, newRefreshToken);
 
-        // Update authorization header
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         }
 
-        // Process queued requests
         processQueue(null, accessToken);
 
-        // Retry original request
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
         processQueue(refreshError as Error, null);
         useAuthStore.getState().clearAuthData();
         window.location.href = '/login';
@@ -130,15 +121,11 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle other errors globally
     if (error.response) {
-      // Server responded with error status
       console.error('API Error:', error.response.data);
     } else if (error.request) {
-      // Request made but no response received
       console.error('Network Error:', error.message);
     } else {
-      // Something else happened
       console.error('Error:', error.message);
     }
 

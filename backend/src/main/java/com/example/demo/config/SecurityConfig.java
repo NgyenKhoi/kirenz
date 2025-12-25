@@ -22,11 +22,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
-
-/**
- * Security configuration using OAuth2 Resource Server for JWT authentication
- * This approach supports both self-issued JWTs and future OAuth2 providers (Google, Facebook, etc.)
- */
 @Configuration
 public class SecurityConfig {
 

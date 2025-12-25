@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ConversationResponse, MessageResponse, UserPresenceResponse } from '../types/dto/chat.dto';
+import type { ConversationUpdateMessage } from '../types/dto/message-summary.dto';
 
 interface ChatState {
   conversations: ConversationResponse[];
@@ -14,6 +15,7 @@ interface ChatState {
   addMessage: (conversationId: string, message: MessageResponse) => void;
   setMessages: (conversationId: string, messages: MessageResponse[]) => void;
   updateConversationLastMessage: (conversationId: string, message: MessageResponse) => void;
+  updateConversation: (update: ConversationUpdateMessage) => void;
   incrementUnreadCount: (conversationId: string) => void;
   resetUnreadCount: (conversationId: string) => void;
   clearChatData: () => void;
@@ -73,6 +75,86 @@ export const useChatStore = create<ChatState>((set, get) => ({
       );
       
       return { conversations };
+    });
+  },
+
+  updateConversation: (update: ConversationUpdateMessage) => {
+    set((state) => {
+      const existingIndex = state.conversations.findIndex(
+        conv => conv.id === update.conversationId
+      );
+      
+      if (existingIndex >= 0) {
+        // Update existing conversation
+        const updatedConversations = [...state.conversations];
+        const existingConv = updatedConversations[existingIndex];
+        
+        updatedConversations[existingIndex] = {
+          ...existingConv,
+          name: update.conversationName || existingConv.name,
+          lastMessage: {
+            id: update.lastMessage.id,
+            conversationId: update.lastMessage.conversationId,
+            senderId: update.lastMessage.senderId,
+            senderName: update.lastMessage.senderName,
+            content: update.lastMessage.previewText,
+            attachments: [],
+            type: update.lastMessage.type,
+            sentAt: update.lastMessage.sentAt,
+            statusList: []
+          },
+          unreadCount: update.unreadCount,
+          updatedAt: update.updatedAt,
+          participants: update.participants.map(p => ({
+            userId: p.userId,
+            username: p.username,
+            email: p.displayName || p.username,
+            joinedAt: existingConv.participants.find(ep => ep.userId === p.userId)?.joinedAt || new Date().toISOString()
+          }))
+        };
+        
+        // Sort by updatedAt (most recent first)
+        updatedConversations.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+        
+        return { conversations: updatedConversations };
+      } else {
+        // Add new conversation
+        const newConversation: ConversationResponse = {
+          id: update.conversationId,
+          type: update.conversationType,
+          name: update.conversationName,
+          participants: update.participants.map(p => ({
+            userId: p.userId,
+            username: p.username,
+            email: p.displayName || p.username,
+            joinedAt: new Date().toISOString()
+          })),
+          lastMessage: {
+            id: update.lastMessage.id,
+            conversationId: update.lastMessage.conversationId,
+            senderId: update.lastMessage.senderId,
+            senderName: update.lastMessage.senderName,
+            content: update.lastMessage.previewText,
+            attachments: [],
+            type: update.lastMessage.type,
+            sentAt: update.lastMessage.sentAt,
+            statusList: []
+          },
+          unreadCount: update.unreadCount,
+          createdAt: new Date().toISOString(),
+          updatedAt: update.updatedAt
+        };
+        
+        // Insert new conversation and sort by updatedAt (most recent first)
+        const allConversations = [newConversation, ...state.conversations];
+        allConversations.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+        
+        return { conversations: allConversations };
+      }
     });
   },
 

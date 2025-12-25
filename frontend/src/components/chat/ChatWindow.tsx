@@ -79,10 +79,11 @@ const ChatWindow = ({
       return;
     }
 
-    const messageSubscriptionId = websocketService.subscribe(
-      `/topic/conversation/${conversation.id}`,
+    // Subscribe to conversation topic for active chat window (receives full message details)
+    const messageSubscriptionId = websocketService.subscribeToConversation(
+      conversation.id,
       (message: MessageResponse) => {
-        console.log('📨 Received message via WebSocket:', message);
+        console.log('📨 Received message via WebSocket for active chat window:', message);
         addMessage(conversation.id, message);
         // Invalidate messages query to refetch
         queryClient.invalidateQueries({ queryKey: chatKeys.messages(conversation.id, currentPage) });
@@ -115,8 +116,13 @@ const ChatWindow = ({
     );
 
     return () => {
-      websocketService.unsubscribe(messageSubscriptionId);
-      websocketService.unsubscribe(typingSubscriptionId);
+      // Unsubscribe from conversation when component unmounts or conversation changes
+      if (messageSubscriptionId) {
+        websocketService.unsubscribeFromConversation(conversation.id);
+      }
+      if (typingSubscriptionId) {
+        websocketService.unsubscribe(typingSubscriptionId);
+      }
     };
   }, [conversation.id, currentUserId, currentPage, addMessage, queryClient]);
 
@@ -148,7 +154,7 @@ const ChatWindow = ({
 
     // Get current user's display name
     const currentUser = conversation.participants.find(p => p.userId === currentUserId);
-    const username = currentUser?.displayName || currentUser?.username || 'User';
+    const username = currentUser?.username || 'User';
 
     try {
       websocketService.sendMessage('/app/chat.typing', {

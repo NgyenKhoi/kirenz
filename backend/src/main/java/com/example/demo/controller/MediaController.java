@@ -26,15 +26,12 @@ public class MediaController {
     public ApiResponse<MediaUploadResponse> uploadMedia(@RequestBody MediaUploadRequest request) {
         log.info("Uploading media: type={}, fileName={}", request.getType(), request.getFileName());
         
-        // Validate media type
         mediaValidator.validateMediaType(request.getType());
         
-        // Decode base64 data
         byte[] data;
         try {
             data = Base64.getDecoder().decode(request.getBase64Data());
         } catch (IllegalArgumentException e) {
-            log.error("Invalid base64 data: {}", e.getMessage());
             throw new AppException(ErrorCode.INVALID_MEDIA_FORMAT);
         }
         
@@ -55,7 +52,6 @@ public class MediaController {
             throw new AppException(ErrorCode.INVALID_MEDIA_TYPE);
         }
         
-        log.info("Media uploaded successfully: publicId={}", response.getCloudinaryPublicId());
         return ApiResponse.success(response, "Media uploaded successfully");
     }
 }

@@ -19,13 +19,6 @@ import java.util.Map;
 @RequestMapping("/api/premium")
 public class PremiumDemoController {
 
-    /**
-     * Demo endpoint that requires premium access
-     * Returns premium content only for users with premium subscription
-     * 
-     * @param authentication Spring Security Authentication object containing JWT
-     * @return Premium content with user information
-     */
     @GetMapping("/content")
     @RequiresPremium
     public ApiResponse<Map<String, Object>> getPremiumContent(Authentication authentication) {
@@ -51,13 +44,7 @@ public class PremiumDemoController {
         
         return ApiResponse.success(premiumData, "Premium content retrieved successfully");
     }
-
-    /**
-     * Public endpoint for comparison - accessible to all authenticated users
-     * 
-     * @param authentication Spring Security Authentication object containing JWT
-     * @return Basic content available to all users
-     */
+    
     @GetMapping("/info")
     public ApiResponse<Map<String, Object>> getPublicInfo(Authentication authentication) {
         Map<String, Object> publicData = new HashMap<>();

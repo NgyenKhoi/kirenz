@@ -8,6 +8,8 @@ type ErrorCallback = (error: any) => void;
 class WebSocketService {
   private client: Client | null = null;
   private subscriptions: Map<string, StompSubscription> = new Map();
+  private conversationSubscriptions: Map<string, StompSubscription> = new Map();
+  private userQueueSubscription: StompSubscription | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
@@ -16,15 +18,24 @@ class WebSocketService {
   private disconnectionCallbacks: ConnectionCallback[] = [];
   private errorCallbacks: ErrorCallback[] = [];
 
-  connect(token: string): Promise<void> {
+  connect(token: string, userId?: number): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.client?.connected) {
+        // If already connected and userId is provided, subscribe to user queue
+        if (userId && !this.userQueueSubscription) {
+          this.subscribeToUserQueue(userId);
+        }
         resolve();
         return;
       }
 
       if (this.isConnecting) {
-        this.onConnect(() => resolve());
+        this.onConnect(() => {
+          if (userId && !this.userQueueSubscription) {
+            this.subscribeToUserQueue(userId);
+          }
+          resolve();
+        });
         return;
       }
 
@@ -49,6 +60,12 @@ class WebSocketService {
           console.log('[WebSocket] Connected successfully');
           this.isConnecting = false;
           this.reconnectAttempts = 0;
+          
+          // Automatically subscribe to user queue if userId is provided (for conversation list updates)
+          if (userId && !this.userQueueSubscription) {
+            this.subscribeToUserQueue(userId);
+          }
+          
           this.connectionCallbacks.forEach(callback => callback());
           this.connectionCallbacks = [];
           resolve();
@@ -69,7 +86,7 @@ class WebSocketService {
           console.log('[WebSocket] Disconnected');
           this.isConnecting = false;
           this.disconnectionCallbacks.forEach(callback => callback());
-          this.handleReconnection(token);
+          this.handleReconnection(token, userId);
         }
       });
 
@@ -77,7 +94,7 @@ class WebSocketService {
     });
   }
 
-  private handleReconnection(token: string): void {
+  private handleReconnection(token: string, userId?: number): void {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
@@ -85,13 +102,88 @@ class WebSocketService {
       console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
       
       setTimeout(() => {
-        this.connect(token).catch(error => {
+        this.connect(token, userId).catch(error => {
           console.error('[WebSocket] Reconnection failed:', error);
         });
       }, delay);
     } else {
       console.error('[WebSocket] Max reconnection attempts reached');
       this.reconnectAttempts = 0;
+    }
+  }
+
+  subscribeToUserQueue(userId: number, callback?: MessageCallback): string | null {
+    if (!this.client?.connected) {
+      console.warn('[WebSocket] Cannot subscribe to user queue - not connected');
+      return null;
+    }
+
+    // Unsubscribe from previous user queue if exists
+    if (this.userQueueSubscription) {
+      this.userQueueSubscription.unsubscribe();
+      this.userQueueSubscription = null;
+    }
+
+    const destination = `/user/${userId}/queue/messages`;
+    
+    this.userQueueSubscription = this.client.subscribe(destination, (message: IMessage) => {
+      try {
+        const parsedMessage = JSON.parse(message.body);
+        console.log('[WebSocket] User queue message received (conversation list update):', parsedMessage);
+        
+        // Call the provided callback if available
+        if (callback) {
+          callback(parsedMessage);
+        }
+      } catch (error) {
+        console.error('[WebSocket] Error parsing user queue message:', error);
+        if (callback) {
+          callback(message.body);
+        }
+      }
+    });
+
+    console.log(`[WebSocket] Subscribed to user queue for conversation list updates: ${destination}`);
+    return 'user-queue-subscription';
+  }
+
+  subscribeToConversation(conversationId: string, callback: MessageCallback): string | null {
+    if (!this.client?.connected) {
+      console.warn('[WebSocket] Cannot subscribe to conversation - not connected');
+      return null;
+    }
+
+    // Unsubscribe from previous conversation subscription if exists
+    const existingSubscription = this.conversationSubscriptions.get(conversationId);
+    if (existingSubscription) {
+      existingSubscription.unsubscribe();
+    }
+
+    const destination = `/topic/conversation/${conversationId}`;
+    
+    const subscription = this.client.subscribe(destination, (message: IMessage) => {
+      try {
+        const parsedMessage = JSON.parse(message.body);
+        console.log('[WebSocket] Conversation message received (active chat window):', parsedMessage);
+        callback(parsedMessage);
+      } catch (error) {
+        console.error('[WebSocket] Error parsing conversation message:', error);
+        callback(message.body);
+      }
+    });
+
+    this.conversationSubscriptions.set(conversationId, subscription);
+    console.log(`[WebSocket] Subscribed to conversation for active chat window: ${destination}`);
+    
+    return `conversation-${conversationId}`;
+  }
+
+  unsubscribeFromConversation(conversationId: string): void {
+    const subscription = this.conversationSubscriptions.get(conversationId);
+    if (subscription) {
+      subscription.unsubscribe();
+      this.conversationSubscriptions.delete(conversationId);
+      console.log(`[WebSocket] Unsubscribed from conversation: ${conversationId}`);
     }
   }
 
@@ -142,24 +234,39 @@ class WebSocketService {
 
   disconnect(): void {
     if (this.client) {
+      // Unsubscribe from all regular subscriptions
       this.subscriptions.forEach((subscription) => {
         subscription.unsubscribe();
       });
       this.subscriptions.clear();
       
+      // Unsubscribe from all conversation subscriptions (multiple conversation support)
+      this.conversationSubscriptions.forEach((subscription, conversationId) => {
+        subscription.unsubscribe();
+        console.log(`[WebSocket] Unsubscribed from conversation: ${conversationId}`);
+      });
+      this.conversationSubscriptions.clear();
+      
+      // Unsubscribe from user queue (conversation list updates)
+      if (this.userQueueSubscription) {
+        this.userQueueSubscription.unsubscribe();
+        this.userQueueSubscription = null;
+        console.log('[WebSocket] Unsubscribed from user queue');
+      }
+      
       this.client.deactivate();
       this.client = null;
       this.reconnectAttempts = 0;
       
-      console.log('[WebSocket] Disconnected and cleaned up');
+      console.log('[WebSocket] Disconnected and cleaned up all subscriptions (dual subscriptions)');
     }
   }
 
-  async reconnect(newToken: string): Promise<void> {
+  async reconnect(newToken: string, userId?: number): Promise<void> {
     console.log('[WebSocket] Reconnecting with new token...');
     
-    // Store current subscriptions
-    const currentSubscriptions = Array.from(this.subscriptions.entries());
+    // Store current conversation subscriptions to re-establish them
+    const activeConversations = Array.from(this.conversationSubscriptions.keys());
     
     // Disconnect current connection
     this.disconnect();
@@ -170,10 +277,11 @@ class WebSocketService {
     
     // Connect with new token
     try {
-      await this.connect(newToken);
+      await this.connect(newToken, userId);
       console.log('[WebSocket] Reconnected successfully with new token');
       
-      // Note: Subscriptions will be re-established by the provider
+      // Note: Conversation subscriptions will be re-established by components
+      // User queue subscription is automatically established in connect()
       return Promise.resolve();
     } catch (error) {
       console.error('[WebSocket] Failed to reconnect with new token:', error);
@@ -199,6 +307,14 @@ class WebSocketService {
 
   onError(callback: ErrorCallback): void {
     this.errorCallbacks.push(callback);
+  }
+
+  getActiveConversationSubscriptions(): string[] {
+    return Array.from(this.conversationSubscriptions.keys());
+  }
+
+  hasUserQueueSubscription(): boolean {
+    return this.userQueueSubscription !== null;
   }
 }
 

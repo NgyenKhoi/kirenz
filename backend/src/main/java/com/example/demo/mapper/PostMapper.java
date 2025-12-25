@@ -14,7 +14,8 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PostMapper {
-    
+
+    @Mapping(target = "author", ignore = true)
     PostResponse toResponse(Post post);
     
     @Mapping(target = "id", ignore = true)
@@ -25,6 +26,7 @@ public interface PostMapper {
     @Mapping(target = "commentsCount", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "userId", ignore = true)
     Post toDocument(CreatePostRequest request);
     
     @Mapping(target = "id", ignore = true)
