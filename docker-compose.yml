@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Message Queue Service
   rabbitmq:
     image: rabbitmq:4-management
     container_name: kirenz-rabbitmq
@@ -11,13 +10,20 @@ services:
     ports:
       - "5672:5672"   # AMQP port
       - "15672:15672" # Management UI
+      - "61613:61613" # STOMP port
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    command: >
+      bash -c "
+        rabbitmq-plugins enable rabbitmq_stomp rabbitmq_web_stomp rabbitmq_management &&
+        rabbitmq-server
+      "
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # Backend Service
   backend:
@@ -42,6 +48,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_STOMP_PORT: ${RABBITMQ_STOMP_PORT}
       # Kafka points to host machine (if you have it running locally)
       KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092
       WEBSOCKET_ALLOWED_ORIGINS: ${WEBSOCKET_ALLOWED_ORIGINS}

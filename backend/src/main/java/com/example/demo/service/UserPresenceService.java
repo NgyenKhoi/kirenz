@@ -107,13 +107,11 @@ public class UserPresenceService {
                 .flatMap(conv -> conv.getParticipantIds().stream())
                 .filter(participantId -> !participantId.equals(userId))
                 .distinct()
-                .forEach(participantId ->
-                        messagingTemplate.convertAndSendToUser(
-                                participantId.toString(),
-                                "/queue/presence",
-                                response
-                        )
-                );
+                .forEach(participantId -> {
+                    // Use RabbitMQ STOMP compliant destination format
+                    String presenceQueueDestination = "/queue/presence." + participantId;
+                    messagingTemplate.convertAndSend(presenceQueueDestination, response);
+                });
     }
 
     @Scheduled(fixedRate = 30000)

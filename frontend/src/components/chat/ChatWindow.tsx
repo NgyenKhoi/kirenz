@@ -91,7 +91,7 @@ const ChatWindow = ({
     );
 
     const typingSubscriptionId = websocketService.subscribe(
-      `/topic/conversation/${conversation.id}/typing`,
+      `/topic/typing.${conversation.id}`,
       (indicator: TypingIndicatorType) => {
         if (indicator.userId !== currentUserId) {
           setTypingUsers(prev => {

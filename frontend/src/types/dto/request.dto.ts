@@ -20,8 +20,10 @@ export interface UpdateCommentRequest {
 }
 
 export interface UpdateProfileRequest {
-  fullName: string;
-  avatarUrl: string;
-  bio: string;
-  birthday: string;
+  fullName?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  dateOfBirth?: string;
+  avatarUrl?: string;
 }

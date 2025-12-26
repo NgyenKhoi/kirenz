@@ -15,6 +15,7 @@ export interface ProfileResponse {
   website?: string;
   dateOfBirth?: string;
   avatarUrl?: string;
+  email?: string;
   createdAt?: string;
   updatedAt: string;
 }

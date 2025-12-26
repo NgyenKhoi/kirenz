@@ -55,7 +55,8 @@ public class MessageBroadcastService {
 
     private void broadcastToConversationTopic(ChatMessage chatMessage) {
         try {
-            String destination = "/topic/conversation/" + chatMessage.getConversationId();
+            // Use RabbitMQ STOMP compliant topic format
+            String destination = "/topic/conversation." + chatMessage.getConversationId();
             
             // Transform to full MessageResponse with all attachments and details
             MessageResponse fullMessage = chatService.convertToMessageResponse(chatMessage);
@@ -89,25 +90,26 @@ public class MessageBroadcastService {
             // Create conversation update with MessageSummary (NO attachment data)
             ConversationUpdateMessage updateMessage = createConversationUpdate(chatMessage, conversation);
             
-            // Broadcast to each participant's user queue
+            // Broadcast to each participant's user-specific queue using RabbitMQ STOMP format
             int successfulBroadcasts = 0;
             for (Long participantId : participantIds) {
                 try {
-                    String userDestination = "/user/" + participantId + "/queue/messages";
-                    messagingTemplate.convertAndSend(userDestination, updateMessage);
-                    log.debug("Broadcasted conversation update to user queue: {}", userDestination);
+                    // Use RabbitMQ STOMP compliant destination format
+                    String userQueueDestination = "/queue/messages." + participantId;
+                    messagingTemplate.convertAndSend(userQueueDestination, updateMessage);
+                    log.debug("Broadcasted conversation update to user-specific queue: {}", userQueueDestination);
                     successfulBroadcasts++;
                     
                 } catch (Exception e) {
-                    log.error("Failed to broadcast to user queue for participant {}: {}", participantId, e.getMessage());
+                    log.error("Failed to broadcast to user-specific queue for participant {}: {}", participantId, e.getMessage());
                 }
             }
             
-            log.info("Completed user queue broadcasting for conversation {}: {}/{} successful", 
+            log.info("Completed user-specific queue broadcasting for conversation {}: {}/{} successful", 
                 chatMessage.getConversationId(), successfulBroadcasts, participantIds.size());
             
         } catch (Exception e) {
-            log.error("Failed to broadcast to user queues for conversation {}: {}", 
+            log.error("Failed to broadcast to user-specific queues for conversation {}: {}", 
                 chatMessage.getConversationId(), e.getMessage());
         }
     }

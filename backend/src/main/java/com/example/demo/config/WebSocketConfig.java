@@ -37,11 +37,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Disable simple broker
-        // config.enableSimpleBroker("/topic", "/queue");
-        
-        // Enable RabbitMQ STOMP broker relay
-        config.enableStompBrokerRelay("/topic", "/queue", "/user")
+        config.enableStompBrokerRelay("/topic", "/queue")
                 .setRelayHost(rabbitHost)
                 .setRelayPort(stompPort)
                 .setClientLogin(rabbitUsername)
@@ -51,7 +47,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setVirtualHost("/");
         
         config.setApplicationDestinationPrefixes("/app");
-        config.setUserDestinationPrefix("/user");
     }
 
     @Override

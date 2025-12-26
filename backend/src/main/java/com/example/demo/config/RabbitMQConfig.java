@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 @Configuration
 public class RabbitMQConfig {
 
@@ -95,5 +95,10 @@ public class RabbitMQConfig {
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(messageConverter);
         return factory;
+    }
+
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
     }
 }

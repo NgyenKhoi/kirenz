@@ -54,7 +54,8 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
   }, [accessToken, isAuthenticated, userId, queryClient]);
 
   const setupSubscriptions = async () => {
-    const presenceSub = websocketService.subscribe('/user/queue/presence', (presence: UserPresenceResponse) => {
+    // Subscribe to user-specific presence updates using RabbitMQ STOMP format
+    const presenceSub = websocketService.subscribe(`/queue/presence.${userId}`, (presence: UserPresenceResponse) => {
       console.log('[WebSocketProvider] Presence update:', presence);
       if (presence.userId && presence.status) {
         const isOnline = presence.status === 'ONLINE';
@@ -63,7 +64,8 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
     });
     subscriptionIds.current.push(presenceSub);
 
-    const conversationSub = websocketService.subscribe('/user/queue/conversations', (conversation: ConversationResponse) => {
+    // Subscribe to user-specific conversation updates using RabbitMQ STOMP format
+    const conversationSub = websocketService.subscribe(`/queue/conversations.${userId}`, (conversation: ConversationResponse) => {
       console.log('[WebSocketProvider] New conversation received:', conversation);
       queryClient.invalidateQueries({ queryKey: chatKeys.conversations() });
       toast.success('New conversation started');

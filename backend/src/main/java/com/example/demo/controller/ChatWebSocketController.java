@@ -89,7 +89,7 @@ public class ChatWebSocketController {
         log.debug("User {} typing in conversation {}: {}", userId, indicator.getConversationId(), indicator.getIsTyping());
         
         messagingTemplate.convertAndSend(
-            "/topic/conversation/" + indicator.getConversationId() + "/typing",
+            "/topic/typing." + indicator.getConversationId(),
             indicator
         );
     }

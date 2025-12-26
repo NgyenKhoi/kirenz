@@ -124,7 +124,7 @@ class WebSocketService {
       this.userQueueSubscription = null;
     }
 
-    const destination = `/user/${userId}/queue/messages`;
+    const destination = `/queue/messages.${userId}`;
     
     this.userQueueSubscription = this.client.subscribe(destination, (message: IMessage) => {
       try {
@@ -159,7 +159,7 @@ class WebSocketService {
       existingSubscription.unsubscribe();
     }
 
-    const destination = `/topic/conversation/${conversationId}`;
+    const destination = `/topic/conversation.${conversationId}`;
     
     const subscription = this.client.subscribe(destination, (message: IMessage) => {
       try {

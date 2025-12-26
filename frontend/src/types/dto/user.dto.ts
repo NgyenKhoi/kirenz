@@ -1,9 +1,9 @@
-import type { ProfileDTO } from './profile.dto';
+import { ProfileResponse } from './profile.dto';
 
-export interface UserDTO {
+export interface UserResponse {
   id: number;
   email: string;
   createdAt: string;
   updatedAt: string;
-  profile?: ProfileDTO;
+  profile?: ProfileResponse;
 }
